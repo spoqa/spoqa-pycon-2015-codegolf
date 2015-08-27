@@ -1,0 +1,6 @@
+dependencies:
+  override:
+  - sudo pip install -r REQUIREMENTS.txt
+test:
+  override:
+  - python test.py
