@@ -1,7 +1,16 @@
 from __future__ import print_function
 
-def draw_pupu():
-    print("""
+
+import sys
+import os
+
+from wand.color import Color
+from wand.image import Image
+from wand.drawing import Drawing
+
+
+PASS_THRESHOLD = 0.999
+EXAMPLE = """
                                                    *******
                                                   **********
                                                  ***********
@@ -43,8 +52,52 @@ def draw_pupu():
           ****************************************************
              ***********************************************
                  **************************************
-""")
+"""
+
+
+def fetch_result():
+    text = os.popen('python pupu.py').read()
+    return text
+
+
+def create_image(text):
+    split_by_rows = text.split('\n')
+    split_by_rows = filter(lambda n: len(n.strip()) > 0, split_by_rows)
+    rows = len(split_by_rows)
+    cols = max(map(lambda n: len(n), split_by_rows))
+    image = Image(width=cols, height=rows, background=Color('white'))
+    with Drawing() as draw:
+        for y, row in enumerate(split_by_rows):
+            if len(row.strip()) == 0:
+                continue
+            for x, point in enumerate(row):
+                if point != ' ':
+                    draw.point(x, y)
+        draw(image)
+    return image
+
+
+def calculate_similarity(a, b):
+    pixels = 0
+    match = 0
+    for ay, by in zip(a, b):
+        for apx, bpx in zip(ay, by):
+            if (apx == bpx):
+                match += 1
+            pixels += 1
+    return float(match)/pixels
+
+
+def do_test():
+    a = create_image(EXAMPLE)
+    b = create_image(fetch_result())
+    similarity = calculate_similarity(a, b)
+    if similarity < PASS_THRESHOLD:
+        print('Validation failed. (similarity: %.2f%%)' % similarity)
+        sys.exit(1)
+    else:
+        print('Passed')
 
 
 if __name__ == '__main__':
-    draw_pupu()
+    do_test()
