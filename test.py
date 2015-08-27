@@ -93,7 +93,7 @@ def do_test():
     b = create_image(fetch_result())
     similarity = calculate_similarity(a, b)
     if similarity < PASS_THRESHOLD:
-        print('Validation failed. (similarity: %.2f%%)' % similarity)
+        print('Validation failed. (similarity: %.2f%%)' % (similarity * 100))
         sys.exit(1)
     else:
         print('Passed')
