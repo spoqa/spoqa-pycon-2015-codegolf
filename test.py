@@ -62,7 +62,7 @@ def fetch_result():
 
 def create_image(text):
     split_by_rows = text.split('\n')
-    split_by_rows = filter(lambda n: len(n.strip()) > 0, split_by_rows)
+    split_by_rows = list(filter(lambda n: len(n.strip()) > 0, split_by_rows))
     rows = len(split_by_rows)
     cols = max(map(lambda n: len(n), split_by_rows))
     image = Image(width=cols, height=rows, background=Color('white'))
