@@ -11,7 +11,10 @@ except ImportError:
 from wand.color import Color
 from wand.image import Image
 from wand.drawing import Drawing
-from tinys3 import Connection
+try:
+    from tinys3 import Connection
+except ImportError:
+    pass
 
 
 PASS_THRESHOLD = 0.999
