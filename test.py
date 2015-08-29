@@ -17,7 +17,7 @@ except ImportError:
     pass
 
 
-PASS_THRESHOLD = 0.999
+PASS_THRESHOLD = 0.990
 EXAMPLE = """
                                                    *******
                                                   **********
@@ -69,12 +69,16 @@ def fetch_result():
     return text
 
 
-def create_image(text):
+def create_image(text, width=None, height=None):
     split_by_rows = text.split('\n')
     split_by_rows = list(filter(lambda n: len(n.strip()) > 0, split_by_rows))
     rows = len(split_by_rows)
     cols = max(map(lambda n: len(n), split_by_rows))
-    image = Image(width=cols, height=rows, background=Color('white'))
+    if width is None:
+        width = cols
+    if height is None:
+        height = rows
+    image = Image(width=width, height=height, background=Color('white'))
     with Drawing() as draw:
         for y, row in enumerate(split_by_rows):
             if len(row.strip()) == 0:
@@ -119,7 +123,7 @@ def upload_to_s3(result, similarity):
 def do_test():
     result = fetch_result()
     a = create_image(EXAMPLE)
-    b = create_image(result)
+    b = create_image(result, width=a.width, height=a.height)
     similarity = calculate_similarity(a, b)
     try:
         upload_to_s3(result, similarity)
