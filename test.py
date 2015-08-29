@@ -1,12 +1,20 @@
 from __future__ import print_function
-
-
-import sys
+import datetime
 import os
+import re
+import sys
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 from wand.color import Color
 from wand.image import Image
 from wand.drawing import Drawing
+try:
+    from tinys3 import Connection
+except ImportError:
+    pass
 
 
 PASS_THRESHOLD = 0.999
@@ -89,10 +97,34 @@ def calculate_similarity(a, b):
     return float(match)/pixels
 
 
+def upload_to_s3(result, similarity):
+    aws_access_key = os.getenv('AWS_ACCESS_KEY')
+    aws_access_secret = os.getenv('AWS_ACCESS_SECRET')
+    if aws_access_key is None or aws_access_secret is None:
+        return
+    remote = os.popen('git config --get remote.origin.url').read().strip()
+    match = re.match('.*/([a-zA-Z0-9_-]+)/spoqa-pycon-2015-codegolf.git', remote)
+    if match is None:
+        participant = 'unknown'
+    else:
+        participant = match.group(1)
+    now = datetime.datetime.now().strftime('%y%M%d-%H%M%S')
+    name = '%s-%s-%d.txt' % (participant, now, similarity * 100)
+    conn = Connection(aws_access_key, aws_access_secret,
+                      default_bucket='entries',
+                      endpoint='pycon-2015-codegolf.s3.amazonaws.com')
+    conn.upload(name, StringIO(result))
+
+
 def do_test():
+    result = fetch_result()
     a = create_image(EXAMPLE)
-    b = create_image(fetch_result())
+    b = create_image(result)
     similarity = calculate_similarity(a, b)
+    try:
+        upload_to_s3(result, similarity)
+    except:
+        pass
     if similarity < PASS_THRESHOLD:
         print('Validation failed. (similarity: %.2f%%)' % (similarity * 100))
         sys.exit(1)
